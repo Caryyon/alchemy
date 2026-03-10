@@ -1,9 +1,10 @@
 // ────────────────────────────────────────────────────────────────────────────
-// Alchemy — Recipe Board Component
+// Alchemy — Recipe Board (parchment redesign)
 // A strategic card game by Ryann Wolff
 // ────────────────────────────────────────────────────────────────────────────
 
 import React from 'react'
+import { motion } from 'framer-motion'
 import type { RecipeCard, ManaType } from '../types/game'
 import { MANA_COLORS } from '../data/cards'
 import { useGameStore } from '../store/gameStore'
@@ -24,17 +25,30 @@ function ProgressBar({ contributed, required, manaType }: {
   const color = MANA_COLORS[manaType]
 
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-[10px] text-gray-400 w-12">{manaType}</span>
-      <div className="flex-1 h-2 rounded-full bg-gray-800 overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${pct}%`, background: color }}
+    <div className="flex items-center gap-2">
+      <span style={{ fontFamily: 'Cinzel, serif', fontSize: 8, color: '#6b5a7a', width: 44, textAlign: 'right' }}>
+        {manaType}
+      </span>
+      <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'rgba(10,5,18,0.6)', border: '1px solid #4a3a5a', overflow: 'hidden' }}>
+        <motion.div
+          style={{ height: '100%', borderRadius: 4, background: `linear-gradient(90deg, ${color}88, ${color})` }}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
         />
       </div>
-      <span className="text-[10px] text-gray-400 w-8 text-right">
+      <span style={{ fontFamily: 'Cinzel, serif', fontSize: 9, color: contributed >= required ? '#4d9f5d' : '#6b5a7a', width: 28 }}>
         {contributed}/{required}
       </span>
+      {/* Mana color dot */}
+      <div style={{
+        width: 8,
+        height: 8,
+        borderRadius: '50%',
+        background: `radial-gradient(circle at 35% 35%, ${color}ff, ${color}55)`,
+        boxShadow: `0 0 4px ${color}66`,
+        flexShrink: 0,
+      }} />
     </div>
   )
 }
@@ -45,7 +59,6 @@ function RecipeCardDisplay({ recipe, isActive, playerId }: {
   playerId: string
 }) {
   const { players, currentPlayerIndex, turnPhase, assignManaToRecipe } = useGameStore()
-  const player = players.find((p) => p.id === playerId)
   const isCurrentPlayer = players[currentPlayerIndex]?.id === playerId
 
   const handleAssign = (manaType: ManaType) => {
@@ -53,41 +66,57 @@ function RecipeCardDisplay({ recipe, isActive, playerId }: {
     assignManaToRecipe(recipe.id, manaType, 1)
   }
 
-  const difficultyColor = recipe.difficulty === 'advanced' ? '#8b5a9f' : '#4d9f5d'
+  const isAdvanced = recipe.difficulty === 'advanced'
+  const borderColor = isAdvanced ? '#8b5a9f' : '#4d9f5d'
+  const totalProgress = recipe.progress.reduce((s, p) => s + p.contributed, 0)
+  const totalRequired = recipe.progress.reduce((s, p) => s + p.required, 0)
+  const pctDone = totalProgress / totalRequired
 
   return (
-    <div
-      className="rounded-xl p-3 flex flex-col gap-2"
+    <motion.div
+      className="recipe-parchment rounded-xl p-3 flex flex-col gap-2"
       style={{
-        background: '#1a1a1a',
-        border: `1px solid ${difficultyColor}`,
+        border: `1px solid ${borderColor}66`,
         minWidth: 180,
         maxWidth: 220,
+        boxShadow: pctDone > 0.7 ? `0 0 12px ${borderColor}44` : 'none',
+        transition: 'box-shadow 0.3s ease',
       }}
+      whileHover={{ scale: isActive && isCurrentPlayer ? 1.02 : 1 }}
     >
-      <div className="flex items-center justify-between">
-        <span className="font-bold text-sm" style={{ color: difficultyColor }}>
+      {/* Recipe header */}
+      <div className="flex items-center justify-between gap-2">
+        <span style={{ fontFamily: 'Cinzel, serif', fontWeight: 700, fontSize: 11, color: borderColor }}>
           🧪 {recipe.name}
         </span>
-        <span
-          className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
-          style={{ background: difficultyColor + '22', color: difficultyColor }}
-        >
+        <span style={{
+          fontFamily: 'Cinzel, serif',
+          fontSize: 8,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          padding: '2px 6px',
+          borderRadius: 4,
+          background: borderColor + '22',
+          color: borderColor,
+        }}>
           {recipe.difficulty}
         </span>
       </div>
 
-      <div className="flex flex-col gap-1">
+      {/* Progress bars (clickable to assign mana) */}
+      <div className="flex flex-col gap-1.5">
         {recipe.progress.map((p) => (
           <button
             key={p.manaType}
             onClick={() => handleAssign(p.manaType)}
-            disabled={!isActive || !isCurrentPlayer || turnPhase !== 'action'}
-            className="w-full text-left rounded transition-colors"
+            disabled={!isActive || !isCurrentPlayer || turnPhase !== 'action' || p.contributed >= p.required}
             style={{
-              cursor: isActive && isCurrentPlayer && turnPhase === 'action' && p.contributed < p.required
-                ? 'pointer'
-                : 'default',
+              all: 'unset',
+              display: 'block',
+              cursor:
+                isActive && isCurrentPlayer && turnPhase === 'action' && p.contributed < p.required
+                  ? 'pointer'
+                  : 'default',
             }}
           >
             <ProgressBar
@@ -99,10 +128,12 @@ function RecipeCardDisplay({ recipe, isActive, playerId }: {
         ))}
       </div>
 
-      {isActive && isCurrentPlayer && turnPhase === 'action' && player && (
-        <p className="text-[9px] text-gray-600 italic">Click a progress bar to assign mana</p>
+      {isActive && isCurrentPlayer && turnPhase === 'action' && (
+        <p style={{ fontFamily: 'Crimson Text, serif', fontStyle: 'italic', fontSize: 10, color: '#4a3a5a', margin: 0 }}>
+          Click a bar to assign mana
+        </p>
       )}
-    </div>
+    </motion.div>
   )
 }
 
@@ -116,25 +147,36 @@ export const RecipeBoard: React.FC<RecipeBoardProps> = ({
     <div className="flex flex-col gap-3">
       {completedRecipes.length > 0 && (
         <div>
-          <p className="text-xs uppercase tracking-widest text-green-500 mb-1">
-            ✓ Completed ({completedRecipes.length})
+          <p style={{ fontFamily: 'Cinzel, serif', fontSize: 9, letterSpacing: '0.15em', color: '#4d9f5d', textTransform: 'uppercase', marginBottom: 6 }}>
+            ✦ Completed ({completedRecipes.length})
           </p>
           <div className="flex flex-wrap gap-2">
             {completedRecipes.map((r) => (
-              <div
+              <motion.div
                 key={r.id}
-                className="px-3 py-1.5 rounded-lg text-sm font-semibold"
-                style={{ background: '#4d9f5d22', color: '#4d9f5d', border: '1px solid #4d9f5d' }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 20,
+                  fontFamily: 'Cinzel, serif',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  background: 'linear-gradient(135deg, #4d9f5d22, #4d9f5d11)',
+                  color: '#4d9f5d',
+                  border: '1px solid #4d9f5d88',
+                  boxShadow: '0 0 8px #4d9f5d33',
+                }}
               >
                 ✨ {r.name}
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       )}
 
       <div>
-        <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+        <p style={{ fontFamily: 'Cinzel, serif', fontSize: 9, letterSpacing: '0.15em', color: '#6b5a7a', textTransform: 'uppercase', marginBottom: 8 }}>
           In Progress ({recipes.length})
         </p>
         <div className="flex flex-wrap gap-3">
@@ -147,7 +189,9 @@ export const RecipeBoard: React.FC<RecipeBoardProps> = ({
             />
           ))}
           {recipes.length === 0 && (
-            <p className="text-gray-600 text-sm italic">All recipes complete!</p>
+            <p style={{ fontFamily: 'Crimson Text, serif', fontStyle: 'italic', color: '#4a3a5a', fontSize: 14 }}>
+              All recipes complete!
+            </p>
           )}
         </div>
       </div>

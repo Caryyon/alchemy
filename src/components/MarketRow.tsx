@@ -1,9 +1,10 @@
 // ────────────────────────────────────────────────────────────────────────────
-// Alchemy — Market Row Component
+// Alchemy — Market Row (magical redesign)
 // A strategic card game by Ryann Wolff
 // ────────────────────────────────────────────────────────────────────────────
 
 import React from 'react'
+import { motion } from 'framer-motion'
 import type { Card } from '../types/game'
 import CardComponent from './Card'
 import { useGameStore } from '../store/gameStore'
@@ -14,6 +15,9 @@ interface MarketRowProps {
   discardSize: number
 }
 
+// Slight alternating rotation for market cards
+const ROTATIONS = [-2.5, 1.5, -1.8, 2.2, -1.2]
+
 export const MarketRow: React.FC<MarketRowProps> = ({ cards, deckSize, discardSize }) => {
   const { turnPhase, drawCard, currentPlayerIndex, players } = useGameStore()
   const currentPlayer = players[currentPlayerIndex]
@@ -21,74 +25,123 @@ export const MarketRow: React.FC<MarketRowProps> = ({ cards, deckSize, discardSi
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-end gap-4 flex-wrap">
         {/* Deck */}
-        <button
+        <motion.button
           onClick={() => canDraw && drawCard(undefined)}
           disabled={!canDraw || deckSize === 0}
-          className="relative flex-shrink-0 rounded-xl overflow-hidden transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          whileHover={canDraw && deckSize > 0 ? { scale: 1.06, y: -4 } : {}}
+          whileTap={canDraw ? { scale: 0.97 } : {}}
+          className="relative flex-shrink-0 rounded-xl overflow-hidden card-back-gradient"
           style={{
-            width: 80,
-            height: 112,
-            background: 'linear-gradient(135deg, #1a1a1a, #0d0d0d)',
-            border: canDraw ? '2px solid #4d9f5d' : '2px solid #2f2f2f',
-            boxShadow: canDraw ? '0 0 12px #4d9f5d44' : 'none',
+            width: 84,
+            height: 118,
+            border: `2px solid ${canDraw ? '#4d9f5dcc' : '#4a3a5a'}`,
+            boxShadow: canDraw
+              ? '0 0 20px #4d9f5d66, 0 4px 20px rgba(0,0,0,0.5)'
+              : '0 4px 12px rgba(0,0,0,0.4)',
+            cursor: canDraw && deckSize > 0 ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
           }}
         >
-          <div className="flex flex-col items-center justify-center h-full gap-1">
-            <span className="text-2xl">🃏</span>
-            <span className="text-xs font-bold" style={{ color: canDraw ? '#4d9f5d' : '#555' }}>
-              Draw
-            </span>
-            <span className="text-[10px] text-gray-500">{deckSize} left</span>
-          </div>
-        </button>
+          {/* Inset border glow */}
+          <div style={{
+            position: 'absolute',
+            inset: 4,
+            border: `1px solid ${canDraw ? '#4d9f5d44' : '#4a3a5a22'}`,
+            borderRadius: 8,
+            background: 'radial-gradient(ellipse at 50% 40%, rgba(139,90,159,0.1), transparent 70%)',
+          }} />
+          <motion.span
+            style={{ fontSize: 28, position: 'relative', zIndex: 1 }}
+            animate={canDraw ? { filter: ['drop-shadow(0 0 4px #4d9f5d66)', 'drop-shadow(0 0 10px #4d9f5dcc)', 'drop-shadow(0 0 4px #4d9f5d66)'] } : {}}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            ⚗️
+          </motion.span>
+          <span style={{
+            fontFamily: 'Cinzel, serif',
+            fontWeight: 700,
+            fontSize: 10,
+            color: canDraw ? '#4d9f5d' : '#4a3a5a',
+            position: 'relative',
+            zIndex: 1,
+          }}>
+            Draw
+          </span>
+          <span style={{ fontFamily: 'Crimson Text, serif', fontSize: 11, color: '#6b5a7a', position: 'relative', zIndex: 1 }}>
+            {deckSize} left
+          </span>
+        </motion.button>
 
         {/* Divider */}
-        <div className="w-px h-16 bg-gray-800" />
+        <div style={{ width: 1, height: 80, background: 'linear-gradient(to bottom, transparent, #8b5a9f44, transparent)' }} />
 
         {/* Market cards */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-3 items-end flex-wrap">
           {cards.map((card, i) => (
-            <div key={card.id} className="flex flex-col items-center gap-1">
+            <motion.div
+              key={card.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="flex flex-col items-center gap-1"
+            >
               <CardComponent
                 card={card}
                 onClick={canDraw ? () => drawCard(i) : undefined}
                 disabled={!canDraw}
+                rotation={ROTATIONS[i % ROTATIONS.length]}
               />
               {canDraw && (
-                <span className="text-[9px] text-green-500 uppercase tracking-wider">Take</span>
+                <motion.span
+                  animate={{ opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                  style={{ fontFamily: 'Cinzel, serif', fontSize: 9, color: '#4d9f5d', letterSpacing: '0.15em', textTransform: 'uppercase' }}
+                >
+                  Take
+                </motion.span>
               )}
-            </div>
+            </motion.div>
           ))}
           {cards.length === 0 && (
-            <p className="text-gray-600 text-sm italic self-center">Market is empty</p>
+            <p style={{ fontFamily: 'Crimson Text, serif', fontStyle: 'italic', color: '#4a3a5a', fontSize: 14 }}>
+              Market is empty
+            </p>
           )}
         </div>
 
         {/* Divider */}
-        <div className="w-px h-16 bg-gray-800" />
+        <div style={{ width: 1, height: 80, background: 'linear-gradient(to bottom, transparent, #8b5a9f44, transparent)' }} />
 
         {/* Discard pile */}
         <div
           className="flex-shrink-0 rounded-xl overflow-hidden flex flex-col items-center justify-center"
           style={{
-            width: 80,
-            height: 112,
-            background: '#1a1a1a',
-            border: '2px solid #2f2f2f',
+            width: 72,
+            height: 100,
+            background: 'rgba(14,8,22,0.6)',
+            border: '1px solid #4a3a5a',
           }}
         >
-          <span className="text-2xl">🗑️</span>
-          <span className="text-[10px] text-gray-500 mt-1">Discard</span>
-          <span className="text-[10px] text-gray-600">{discardSize}</span>
+          <span style={{ fontSize: 22 }}>🗑️</span>
+          <span style={{ fontFamily: 'Cinzel, serif', fontSize: 9, color: '#4a3a5a', marginTop: 4, letterSpacing: '0.1em' }}>DISCARD</span>
+          <span style={{ fontFamily: 'Cinzel, serif', fontSize: 12, color: '#6b5a7a' }}>{discardSize}</span>
         </div>
       </div>
 
       {canDraw && (
-        <p className="text-xs text-green-400 animate-pulse">
-          👆 {currentPlayer?.name}: Draw from deck or take a market card
-        </p>
+        <motion.p
+          animate={{ opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          style={{ fontFamily: 'Crimson Text, serif', fontStyle: 'italic', color: '#4d9f5d', fontSize: 14 }}
+        >
+          👆 {currentPlayer?.name}: Draw from the deck or take a card from the market
+        </motion.p>
       )}
     </div>
   )

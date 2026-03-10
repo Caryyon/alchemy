@@ -1,13 +1,184 @@
 // ────────────────────────────────────────────────────────────────────────────
-// Alchemy — Setup Screen
+// Alchemy — Setup Screen (magical redesign)
 // A strategic card game by Ryann Wolff
 // ────────────────────────────────────────────────────────────────────────────
 
 import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { CLASSES } from '../data/classes'
 import { useGameStore } from '../store/gameStore'
+import Background from '../components/Background'
+import OnlineLobby from '../components/OnlineLobby'
+
+type Mode = 'home' | 'hotseat' | 'online'
 
 export const Setup: React.FC = () => {
+  const [mode, setMode] = useState<Mode>('home')
+
+  return (
+    <>
+      <Background />
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative"
+        style={{ zIndex: 1 }}
+      >
+        <AnimatePresence mode="wait">
+          {mode === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="flex flex-col items-center gap-10"
+            >
+              <HomeScreen onSelect={setMode} />
+            </motion.div>
+          )}
+          {mode === 'hotseat' && (
+            <motion.div
+              key="hotseat"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="w-full flex flex-col items-center"
+            >
+              <HotseatSetup onBack={() => setMode('home')} />
+            </motion.div>
+          )}
+          {mode === 'online' && (
+            <motion.div
+              key="online"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="w-full flex flex-col items-center"
+            >
+              <OnlineLobby onBack={() => setMode('home')} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </>
+  )
+}
+
+// ── Home Screen ───────────────────────────────────────────────────────────────
+
+function HomeScreen({ onSelect }: { onSelect: (m: Mode) => void }) {
+  return (
+    <>
+      {/* Big title */}
+      <div className="text-center">
+        <h1
+          className="title-shimmer"
+          style={{
+            fontSize: 'clamp(48px, 10vw, 96px)',
+            letterSpacing: '0.08em',
+            margin: 0,
+            lineHeight: 1.1,
+          }}
+        >
+          ✨ ALCHEMY ✨
+        </h1>
+        <p style={{
+          fontFamily: 'Crimson Text, serif',
+          fontStyle: 'italic',
+          color: '#c9a84c',
+          fontSize: 20,
+          marginTop: 8,
+          letterSpacing: '0.05em',
+        }}>
+          A game by Ryann Wolff
+        </p>
+        <p style={{
+          fontFamily: 'Crimson Text, serif',
+          color: '#8b7a6a',
+          fontSize: 15,
+          marginTop: 4,
+        }}>
+          Brew potions · Collect mana · Outmaneuver your rivals
+        </p>
+      </div>
+
+      {/* Mode selection */}
+      <div className="flex flex-col gap-4 w-full" style={{ maxWidth: 400 }}>
+        <ModeButton
+          icon="🎲"
+          title="Play on this device"
+          subtitle="Pass & play with 2–4 players"
+          onClick={() => onSelect('hotseat')}
+          color="#4d9f5d"
+        />
+        <ModeButton
+          icon="🌐"
+          title="Play online"
+          subtitle="Share a link — play from anywhere"
+          onClick={() => onSelect('online')}
+          color="#8b5a9f"
+        />
+      </div>
+
+      <p style={{ color: '#4a3a5a', fontFamily: 'Crimson Text, serif', fontSize: 13 }}>
+        First to complete 5 recipes wins!
+      </p>
+    </>
+  )
+}
+
+function ModeButton({
+  icon,
+  title,
+  subtitle,
+  onClick,
+  color,
+}: {
+  icon: string
+  title: string
+  subtitle: string
+  onClick: () => void
+  color: string
+}) {
+  const [hov, setHov] = useState(false)
+  return (
+    <motion.button
+      onClick={onClick}
+      onHoverStart={() => setHov(true)}
+      onHoverEnd={() => setHov(false)}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.98 }}
+      style={{
+        background: hov ? color + '22' : 'rgba(26,18,40,0.8)',
+        border: `2px solid ${hov ? color : color + '55'}`,
+        borderRadius: 16,
+        padding: '18px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 16,
+        cursor: 'pointer',
+        boxShadow: hov ? `0 0 24px ${color}44` : 'none',
+        transition: 'all 0.2s ease',
+        textAlign: 'left',
+      }}
+    >
+      <span style={{ fontSize: 32 }}>{icon}</span>
+      <div>
+        <div style={{ fontFamily: 'Cinzel, serif', fontWeight: 700, color: hov ? color : '#e8d5b7', fontSize: 16 }}>
+          {title}
+        </div>
+        <div style={{ fontFamily: 'Crimson Text, serif', color: '#8b7a6a', fontSize: 13 }}>
+          {subtitle}
+        </div>
+      </div>
+    </motion.button>
+  )
+}
+
+// ── Hotseat Setup ─────────────────────────────────────────────────────────────
+
+function HotseatSetup({ onBack }: { onBack: () => void }) {
   const { startGame } = useGameStore()
 
   const [playerCount, setPlayerCount] = useState(2)
@@ -33,10 +204,7 @@ export const Setup: React.FC = () => {
   const activeClasses = selectedClasses.slice(0, playerCount)
   const activeNames = playerNames.slice(0, playerCount)
   const usedClasses = new Set(activeClasses)
-
-  const canStart =
-    activeClasses.every((c) => c !== '') &&
-    new Set(activeClasses).size === playerCount // no duplicate classes
+  const canStart = activeClasses.every((c) => c !== '') && new Set(activeClasses).size === playerCount
 
   const handleStart = () => {
     if (!canStart) return
@@ -44,63 +212,71 @@ export const Setup: React.FC = () => {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
-      style={{ background: '#0d0d0d', color: '#e0e0e0' }}
-    >
-      {/* Title */}
-      <div className="text-center mb-12">
-        <h1
-          className="text-6xl font-black tracking-tight mb-2"
+    <div className="w-full flex flex-col items-center gap-6" style={{ maxWidth: 720 }}>
+      {/* Back + title */}
+      <div className="w-full flex items-center gap-4">
+        <button
+          onClick={onBack}
           style={{
-            background: 'linear-gradient(135deg, #4d9f5d, #8b5a9f)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            background: 'rgba(26,18,40,0.7)',
+            border: '1px solid #4a3a5a',
+            borderRadius: 8,
+            padding: '6px 12px',
+            color: '#8b7a9a',
+            fontFamily: 'Cinzel, serif',
+            fontSize: 12,
+            cursor: 'pointer',
           }}
         >
-          ⚗️ Alchemy
-        </h1>
-        <p className="text-gray-400 text-lg">A strategic card game by Ryann Wolff</p>
-        <p className="text-gray-600 text-sm mt-2">
-          Brew potions. Collect mana. Outmaneuver your rivals. First to complete 5 recipes wins.
-        </p>
+          ← Back
+        </button>
+        <h2 style={{ fontFamily: 'Cinzel, serif', color: '#c9a84c', fontSize: 20, margin: 0 }}>
+          ⚗️ Setup Game
+        </h2>
       </div>
 
-      {/* Setup card */}
+      {/* Setup panel */}
       <div
-        className="w-full max-w-3xl rounded-2xl p-8 flex flex-col gap-8"
-        style={{ background: '#1a1a1a', border: '1px solid #2f2f2f' }}
+        className="w-full parchment rounded-2xl p-6 flex flex-col gap-6"
+        style={{ border: '1px solid #8b5a9f44' }}
       >
         {/* Player count */}
         <div>
-          <h2 className="text-sm uppercase tracking-widest text-gray-500 mb-3">
-            Number of Players
-          </h2>
+          <h3 style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.15em', color: '#6b5a7a', textTransform: 'uppercase', marginBottom: 10, margin: '0 0 10px 0' }}>
+            Number of Alchemists
+          </h3>
           <div className="flex gap-3">
             {[2, 3, 4].map((n) => (
-              <button
+              <motion.button
                 key={n}
                 onClick={() => setPlayerCount(n)}
-                className="px-6 py-3 rounded-xl font-bold text-lg transition-all duration-200 hover:scale-105"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
                 style={{
-                  background: playerCount === n ? '#4d9f5d' : '#252525',
-                  color: playerCount === n ? '#fff' : '#666',
-                  border: `2px solid ${playerCount === n ? '#4d9f5d' : '#2f2f2f'}`,
-                  boxShadow: playerCount === n ? '0 0 16px #4d9f5d44' : 'none',
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  background: playerCount === n ? 'radial-gradient(circle at 35% 35%, #4d9f5dcc, #4d9f5d88)' : 'rgba(26,18,40,0.6)',
+                  border: `2px solid ${playerCount === n ? '#4d9f5d' : '#4a3a5a'}`,
+                  color: playerCount === n ? '#fff' : '#6b5a7a',
+                  fontFamily: 'Cinzel, serif',
+                  fontWeight: 700,
+                  fontSize: 20,
+                  cursor: 'pointer',
+                  boxShadow: playerCount === n ? '0 0 16px #4d9f5d66' : 'none',
                 }}
               >
                 {n}
-              </button>
+              </motion.button>
             ))}
           </div>
-          <p className="text-xs text-gray-600 mt-2">
+          <p style={{ fontFamily: 'Crimson Text, serif', fontStyle: 'italic', color: '#6b5a7a', fontSize: 13, marginTop: 6 }}>
             {playerCount === 2 ? '7 cards each' : playerCount === 3 ? '6 cards each' : '5 cards each'}
           </p>
         </div>
 
-        {/* Player setups */}
-        <div className="flex flex-col gap-6">
+        {/* Players */}
+        <div className="flex flex-col gap-4">
           {Array.from({ length: playerCount }, (_, i) => (
             <PlayerSetup
               key={i}
@@ -116,36 +292,36 @@ export const Setup: React.FC = () => {
 
         {/* Start button */}
         <div className="flex flex-col items-center gap-3">
-          {!canStart && activeClasses.some((c) => c === '') && (
-            <p className="text-yellow-500 text-sm">Each player must choose a class.</p>
+          {!canStart && (
+            <p style={{ fontFamily: 'Crimson Text, serif', fontStyle: 'italic', color: '#c9a84c', fontSize: 14 }}>
+              Each alchemist must choose a unique class.
+            </p>
           )}
-          {canStart && new Set(activeClasses).size !== playerCount && (
-            <p className="text-yellow-500 text-sm">Each player must choose a unique class.</p>
-          )}
-
-          <button
+          <motion.button
             onClick={handleStart}
             disabled={!canStart}
-            className="px-12 py-4 rounded-2xl font-black text-xl transition-all duration-200 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+            whileHover={canStart ? { scale: 1.05 } : {}}
+            whileTap={canStart ? { scale: 0.97 } : {}}
+            className={canStart ? 'brew-button' : ''}
             style={{
+              padding: '16px 48px',
+              borderRadius: 16,
+              fontFamily: 'Cinzel, serif',
+              fontWeight: 900,
+              fontSize: 18,
+              letterSpacing: '0.08em',
               background: canStart
-                ? 'linear-gradient(135deg, #4d9f5d, #8b5a9f)'
-                : '#2f2f2f',
-              color: '#fff',
-              boxShadow: canStart ? '0 0 30px #4d9f5d44' : 'none',
+                ? 'linear-gradient(135deg, #2a7a3d, #4d9f5d, #8b5a9f)'
+                : '#2a1a3a',
+              color: canStart ? '#fff' : '#4a3a5a',
+              border: `2px solid ${canStart ? '#4d9f5d' : '#3a2a4a'}`,
+              cursor: canStart ? 'pointer' : 'not-allowed',
+              opacity: canStart ? 1 : 0.5,
             }}
           >
             ✨ Begin Brewing
-          </button>
+          </motion.button>
         </div>
-      </div>
-
-      {/* Rules teaser */}
-      <div className="mt-8 text-center text-gray-600 text-sm max-w-lg">
-        <p>
-          Each turn: draw a card → play ingredients for mana → cast spells → assign mana to recipes.
-          Complete 5 recipes to win!
-        </p>
       </div>
     </div>
   )
@@ -173,74 +349,113 @@ function PlayerSetup({
   const selected = CLASSES.find((c) => c.id === selectedClass)
 
   return (
-    <div
-      className="rounded-xl p-4 flex flex-col gap-3"
+    <motion.div
+      className="rounded-2xl p-4 flex flex-col gap-3"
       style={{
-        background: '#252525',
-        border: `1px solid ${selected ? selected.color + '66' : '#2f2f2f'}`,
+        background: selected ? selected.color + '11' : 'rgba(26,18,40,0.5)',
+        border: `1px solid ${selected ? selected.color + '66' : '#4a3a5a'}`,
+        boxShadow: selected ? `0 0 20px ${selected.color}22` : 'none',
+        transition: 'all 0.3s ease',
       }}
     >
       <div className="flex items-center gap-3">
-        <span className="text-2xl">{selected?.emoji ?? '❓'}</span>
+        <motion.span
+          key={selected?.emoji}
+          initial={{ scale: 0.5, rotate: -10 }}
+          animate={{ scale: 1, rotate: 0 }}
+          style={{ fontSize: 28 }}
+        >
+          {selected?.emoji ?? '❓'}
+        </motion.span>
         <div className="flex-1">
-          <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Player {playerIndex + 1}</p>
+          <p style={{ fontFamily: 'Cinzel, serif', fontSize: 9, letterSpacing: '0.15em', color: '#6b5a7a', textTransform: 'uppercase', marginBottom: 4 }}>
+            Player {playerIndex + 1}
+          </p>
           <input
             type="text"
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
-            className="bg-transparent border-b text-white font-bold text-lg focus:outline-none w-full"
-            style={{ borderColor: selected?.color ?? '#2f2f2f' }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              borderBottom: `1px solid ${selected?.color ?? '#4a3a5a'}`,
+              color: '#e8d5b7',
+              fontFamily: 'Cinzel, serif',
+              fontWeight: 700,
+              fontSize: 16,
+              outline: 'none',
+              width: '100%',
+            }}
             maxLength={20}
           />
         </div>
       </div>
 
       {/* Class grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
         {CLASSES.map((cls) => {
           const isSelected = selectedClass === cls.id
           const isUsed = usedClasses.has(cls.id) && !isSelected
 
           return (
-            <button
+            <motion.button
               key={cls.id}
               onClick={() => !isUsed && onClassSelect(cls.id)}
               disabled={isUsed}
-              className="rounded-xl p-3 flex flex-col items-center gap-1 transition-all duration-200 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
+              whileHover={!isUsed ? { scale: 1.08 } : {}}
+              whileTap={!isUsed ? { scale: 0.95 } : {}}
               style={{
-                background: isSelected ? cls.color + '22' : '#1a1a1a',
-                border: `2px solid ${isSelected ? cls.color : '#2f2f2f'}`,
-                boxShadow: isSelected ? `0 0 12px ${cls.color}44` : 'none',
+                borderRadius: 12,
+                padding: '10px 4px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 3,
+                background: isSelected ? cls.color + '22' : 'rgba(14,8,22,0.6)',
+                border: `2px solid ${isSelected ? cls.color : '#4a3a5a'}`,
+                boxShadow: isSelected ? `0 0 14px ${cls.color}55` : 'none',
+                cursor: isUsed ? 'not-allowed' : 'pointer',
+                opacity: isUsed ? 0.3 : 1,
+                transition: 'all 0.2s ease',
               }}
             >
-              <span className="text-2xl">{cls.emoji}</span>
-              <span
-                className="text-xs font-bold text-center leading-tight"
-                style={{ color: isSelected ? cls.color : '#888' }}
-              >
-                {cls.name}
+              <span style={{ fontSize: 22, filter: isSelected ? `drop-shadow(0 0 6px ${cls.color})` : 'none' }}>
+                {cls.emoji}
               </span>
-              <span className="text-[9px] text-gray-600 text-center leading-tight">
-                {cls.mana} mana
+              <span style={{
+                fontFamily: 'Cinzel, serif',
+                fontSize: 8,
+                fontWeight: 700,
+                color: isSelected ? cls.color : '#6b5a7a',
+                textAlign: 'center',
+                lineHeight: 1.2,
+              }}>
+                {cls.name.replace('The ', '')}
               </span>
-            </button>
+            </motion.button>
           )
         })}
       </div>
 
       {selected && (
-        <div
-          className="rounded-lg p-3"
-          style={{ background: '#1a1a1a', border: `1px solid ${selected.color}33` }}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl p-3"
+          style={{ background: 'rgba(10,5,18,0.7)', border: `1px solid ${selected.color}33` }}
         >
-          <p className="text-xs font-bold mb-1" style={{ color: selected.color }}>
-            ✨ Class Ability
+          <p style={{ fontFamily: 'Cinzel, serif', fontSize: 10, fontWeight: 700, color: selected.color, marginBottom: 3 }}>
+            ✨ Class Power — {selected.mana} Mana
           </p>
-          <p className="text-xs text-gray-400">{selected.passiveAbility}</p>
-          <p className="text-xs text-gray-600 mt-1">{selected.description}</p>
-        </div>
+          <p style={{ fontFamily: 'Crimson Text, serif', fontStyle: 'italic', color: '#b8a898', fontSize: 13 }}>
+            {selected.passiveAbility}
+          </p>
+          <p style={{ fontFamily: 'Crimson Text, serif', color: '#6b5a7a', fontSize: 12, marginTop: 2 }}>
+            {selected.description}
+          </p>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

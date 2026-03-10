@@ -1,9 +1,9 @@
 // ────────────────────────────────────────────────────────────────────────────
-// Alchemy — Card Component
+// Alchemy — Card Component (magical redesign)
 // A strategic card game by Ryann Wolff
 // ────────────────────────────────────────────────────────────────────────────
 
-import React from 'react'
+import React, { useState } from 'react'
 import type { Card as CardType, IngredientCard, SpellCard, ManaType } from '../types/game'
 import { MANA_COLORS, MANA_GRADIENTS } from '../data/cards'
 
@@ -14,6 +14,7 @@ interface CardProps {
   disabled?: boolean
   compact?: boolean
   faceDown?: boolean
+  rotation?: number
 }
 
 function getManaType(card: CardType): ManaType {
@@ -32,35 +33,28 @@ function getGradient(card: CardType): string {
   return MANA_GRADIENTS[mana] ?? MANA_GRADIENTS['Any']
 }
 
-function TypeBadge({ card }: { card: CardType }) {
-  const labels: Record<CardType['type'], string> = {
-    ingredient: '⚗️ Ingredient',
-    recipe: '📜 Recipe',
-    spell: '✨ Spell',
-    scroll: '📖 Scroll',
-  }
-  return (
-    <span
-      className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-      style={{ background: 'rgba(0,0,0,0.4)', color: '#aaa' }}
-    >
-      {labels[card.type]}
-    </span>
-  )
-}
-
-function ManaCostBadge({ card }: { card: CardType }) {
+// ── Mana gem dots ─────────────────────────────────────────────────────────────
+function ManaGems({ card }: { card: CardType }) {
   if (card.type === 'ingredient') {
     const ing = card as IngredientCard
     const color = MANA_COLORS[ing.manaType]
     return (
       <div className="flex items-center gap-1">
-        <span
-          className="text-xs font-bold px-2 py-0.5 rounded-full"
-          style={{ background: color + '33', color, border: `1px solid ${color}` }}
-        >
-          +{ing.manaValue} {ing.manaType}
-        </span>
+        {Array.from({ length: Math.min(ing.manaValue, 5) }, (_, i) => (
+          <div
+            key={i}
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: `radial-gradient(circle at 35% 35%, ${color}ff, ${color}88)`,
+              boxShadow: `0 0 4px ${color}88`,
+            }}
+          />
+        ))}
+        {ing.manaValue > 5 && (
+          <span style={{ fontSize: 9, color, fontFamily: 'Cinzel, serif' }}>+{ing.manaValue - 5}</span>
+        )}
       </div>
     )
   }
@@ -69,26 +63,35 @@ function ManaCostBadge({ card }: { card: CardType }) {
     const color = MANA_COLORS[sp.manaType]
     return (
       <div className="flex items-center gap-1">
-        <span
-          className="text-xs font-bold px-2 py-0.5 rounded-full"
-          style={{ background: color + '33', color, border: `1px solid ${color}` }}
+        <div
+          style={{
+            width: 14,
+            height: 14,
+            borderRadius: '50%',
+            background: `radial-gradient(circle at 35% 35%, ${color}ff, ${color}55)`,
+            boxShadow: `0 0 6px ${color}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 8,
+            fontFamily: 'Cinzel, serif',
+            fontWeight: 700,
+            color: '#fff',
+          }}
         >
-          {sp.manaCost} {sp.manaType}
-        </span>
+          {sp.manaCost}
+        </div>
       </div>
     )
   }
   return null
 }
 
-// ── Art Area ──────────────────────────────────────────────────────────────────
-// Uses card.image (set in cards.ts) when art exists.
-// Falls back to a mana-colored gradient for fairy-wings, spells, and any card without art.
-
+// ── Card art area ─────────────────────────────────────────────────────────────
 function CardArt({ card, height }: { card: CardType; height: number }) {
   if (card.image) {
     return (
-      <div style={{ height, width: '100%', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ height, width: '100%', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
         <img
           src={card.image}
           alt={card.name}
@@ -100,28 +103,72 @@ function CardArt({ card, height }: { card: CardType; height: number }) {
             display: 'block',
           }}
         />
+        {/* Art overlay vignette */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to bottom, transparent 60%, rgba(10,5,20,0.6) 100%)',
+        }} />
       </div>
     )
   }
 
-  // Gradient placeholder (fairy-wings, spells, any card without art)
   const gradient = getGradient(card)
   const emoji =
-    card.type === 'ingredient' ? '🌿'   // fairy-wings
+    card.type === 'ingredient' ? '🌿'
     : card.type === 'recipe'   ? '🧪'
     : card.type === 'scroll'   ? '📜'
-    : '✨'                               // spell
+    : '✨'
 
   return (
     <div
       className={`bg-gradient-to-br ${gradient} flex items-center justify-center`}
       style={{ height, width: '100%', flexShrink: 0 }}
     >
-      <span style={{ fontSize: height < 50 ? 20 : 36 }}>{emoji}</span>
+      <span style={{ fontSize: height < 50 ? 20 : 40, filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.3))' }}>
+        {emoji}
+      </span>
     </div>
   )
 }
 
+// ── Rarity indicator ───────────────────────────────────────────────────────────
+function RarityBadge({ rarity }: { rarity: string }) {
+  if (rarity === 'common') return null
+  const isRare = rarity === 'rare'
+  return (
+    <span className={isRare ? 'rare-shimmer' : 'uncommon-shimmer'} style={{ fontSize: 9, fontFamily: 'Cinzel, serif' }}>
+      {isRare ? '◆ RARE' : '◇ UNCOMMON'}
+    </span>
+  )
+}
+
+// ── Type tag ──────────────────────────────────────────────────────────────────
+function TypeTag({ card }: { card: CardType }) {
+  const icons: Record<CardType['type'], string> = {
+    ingredient: '⚗️',
+    recipe: '🧪',
+    spell: '✨',
+    scroll: '📖',
+  }
+  return (
+    <span style={{
+      fontSize: 8,
+      fontFamily: 'Cinzel, serif',
+      fontWeight: 600,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: '#8b7a6a',
+      padding: '1px 4px',
+      borderRadius: 3,
+      background: 'rgba(0,0,0,0.4)',
+    }}>
+      {icons[card.type]} {card.type}
+    </span>
+  )
+}
+
+// ── Main Card component ───────────────────────────────────────────────────────
 export const CardComponent: React.FC<CardProps> = ({
   card,
   onClick,
@@ -129,99 +176,189 @@ export const CardComponent: React.FC<CardProps> = ({
   disabled = false,
   compact = false,
   faceDown = false,
+  rotation = 0,
 }) => {
+  const [hovered, setHovered] = useState(false)
   const accent = getCardAccent(card)
-  const artHeight = compact ? 44 : 90
+  const artHeight = compact ? 44 : 96
 
-  // ── Face-down (deck pile / opponent hand) ────────────────────────────────
+  const isIngredient = card.type === 'ingredient'
+  const rarity = isIngredient ? (card as IngredientCard).rarity : 'common'
+  const isRare = rarity === 'rare'
+  const isUncommon = rarity === 'uncommon'
+
+  const cardWidth = compact ? 76 : 148
+  const cardHeight = compact ? 108 : 220
+
+  // ── Face-down ───────────────────────────────────────────────────────────
   if (faceDown) {
     return (
       <div
-        className="relative rounded-xl overflow-hidden flex-shrink-0"
+        className="relative rounded-xl overflow-hidden flex-shrink-0 card-back-gradient"
         style={{
-          width: compact ? 72 : 120,
-          height: compact ? 100 : 168,
-          border: '2px solid #2f2f2f',
+          width: compact ? 72 : 110,
+          height: compact ? 100 : 154,
+          border: '2px solid #8b5a9f44',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.5), inset 0 0 20px rgba(139,90,159,0.1)',
+          transform: `rotate(${rotation}deg)`,
         }}
       >
-        <img
-          src="/cards/card-back.png"
-          alt="Card back"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          onError={(e) => {
-            // Fallback if card-back.png is missing for some reason
-            const el = e.currentTarget as HTMLImageElement
-            el.style.display = 'none'
-            ;(el.parentElement as HTMLDivElement).style.background =
-              'linear-gradient(135deg, #1a1a1a, #0d0d0d)'
-          }}
-        />
+        <div style={{
+          position: 'absolute',
+          inset: 4,
+          border: '1px solid #8b5a9f33',
+          borderRadius: 8,
+          background: 'radial-gradient(ellipse at 50% 40%, #8b5a9f22, transparent 70%)',
+        }} />
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: compact ? 18 : 28,
+        }}>
+          ⚗️
+        </div>
       </div>
     )
   }
 
   // ── Face-up card ─────────────────────────────────────────────────────────
+  const borderColor = selected ? '#ffffff' : hovered ? accent : accent + '88'
+  const glowColor = selected
+    ? `0 0 0 2px #fff, 0 0 24px ${accent}cc, 0 0 48px ${accent}44`
+    : hovered
+    ? `0 0 18px ${accent}88, 0 0 36px ${accent}33`
+    : isRare
+    ? `0 0 12px #c9a84c44`
+    : 'none'
+
+  const translateY = selected ? -10 : hovered ? -7 : 0
+  const scale = selected ? 1.05 : hovered ? 1.04 : 1
+
   return (
     <div
       onClick={!disabled ? onClick : undefined}
+      onMouseEnter={() => !disabled && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={`
-        relative rounded-xl overflow-hidden flex-shrink-0 flex flex-col transition-all duration-200
-        ${onClick && !disabled ? 'cursor-pointer hover:scale-105' : ''}
-        ${selected ? 'scale-105' : ''}
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        relative flex-shrink-0 flex flex-col parchment
+        ${isRare && !compact ? 'rare-card' : ''}
+        ${onClick && !disabled ? 'cursor-pointer' : ''}
+        ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
       `}
       style={{
-        width: compact ? 72 : 160,
-        height: compact ? 100 : 224,
-        background: '#1a1a1a',
-        border: `2px solid ${selected ? '#fff' : accent}`,
-        boxShadow: selected
-          ? `0 0 16px ${accent}88`
-          : 'none',
-      }}
-      onMouseEnter={(e) => {
-        if (onClick && !disabled) {
-          ;(e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 12px ${accent}66`
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!selected) {
-          ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
-        }
-      }}
+        width: cardWidth,
+        height: cardHeight,
+        borderRadius: 10,
+        border: `2px solid ${borderColor}`,
+        boxShadow: glowColor,
+        overflow: 'hidden',
+        transform: `translateY(${translateY}px) scale(${scale}) rotate(${rotation}deg)`,
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+        '--card-rot': `${rotation}deg`,
+      } as React.CSSProperties}
     >
-      {/* Art */}
+      {/* Outer frame inset glow */}
+      <div style={{
+        position: 'absolute',
+        inset: 3,
+        borderRadius: 7,
+        border: `1px solid ${accent}33`,
+        pointerEvents: 'none',
+        zIndex: 10,
+      }} />
+
+      {/* Rare/uncommon border shimmer strip */}
+      {isRare && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 10,
+          border: '2px solid transparent',
+          background: `linear-gradient(#12082a, #12082a) padding-box, linear-gradient(90deg, #c9a84c, #fff0a0, #c9a84c, #ffd700) border-box`,
+          backgroundSize: '200% auto',
+          animation: 'shimmer-border 2s linear infinite',
+          pointerEvents: 'none',
+          zIndex: 9,
+        }} />
+      )}
+      {isUncommon && !compact && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 10,
+          border: '2px solid transparent',
+          background: `linear-gradient(#12082a, #12082a) padding-box, linear-gradient(90deg, #8888aa, #ccccdd, #8888aa) border-box`,
+          backgroundSize: '200% auto',
+          animation: 'shimmer-border 3s linear infinite',
+          pointerEvents: 'none',
+          zIndex: 9,
+        }} />
+      )}
+
+      {/* Art area */}
       <CardArt card={card} height={artHeight} />
 
-      {/* Text body */}
-      <div className="p-1.5 flex flex-col gap-0.5 flex-1 overflow-hidden">
-        {!compact && <TypeBadge card={card} />}
+      {/* Divider */}
+      <div style={{
+        height: 1,
+        background: `linear-gradient(90deg, transparent, ${accent}88, transparent)`,
+        flexShrink: 0,
+      }} />
 
-        <p
-          className="font-bold leading-tight"
-          style={{ fontSize: compact ? 9 : 12, color: accent }}
-        >
+      {/* Card info body */}
+      <div style={{
+        padding: compact ? '4px 5px' : '6px 8px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: compact ? 2 : 3,
+        flex: 1,
+        overflow: 'hidden',
+        background: 'linear-gradient(160deg, rgba(26,18,32,0.97), rgba(14,8,22,0.99))',
+      }}>
+        {!compact && <TypeTag card={card} />}
+
+        {/* Card name */}
+        <p style={{
+          fontFamily: 'Cinzel, serif',
+          fontWeight: 700,
+          fontSize: compact ? 8 : 11,
+          color: accent,
+          lineHeight: 1.2,
+          textShadow: `0 0 8px ${accent}44`,
+          margin: 0,
+        }}>
           {card.name}
         </p>
 
+        {/* Mana gems */}
+        <ManaGems card={card} />
+
         {!compact && (
           <>
-            <ManaCostBadge card={card} />
-            <p
-              className="text-gray-400 leading-tight overflow-hidden"
-              style={{ fontSize: 10, marginTop: 2 }}
-            >
+            {/* Description */}
+            <p style={{
+              fontFamily: 'Crimson Text, serif',
+              fontStyle: 'italic',
+              fontSize: 10,
+              color: '#b8a898',
+              lineHeight: 1.3,
+              margin: 0,
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+            }}>
               {card.description}
             </p>
-            {card.type === 'ingredient' && (card as IngredientCard).rarity !== 'common' && (
-              <span
-                className="text-[9px] uppercase tracking-widest mt-auto"
-                style={{
-                  color: (card as IngredientCard).rarity === 'rare' ? '#d4774a' : '#8b5a9f',
-                }}
-              >
-                ◆ {(card as IngredientCard).rarity}
-              </span>
+
+            {/* Rarity */}
+            {isIngredient && (
+              <div style={{ marginTop: 'auto' }}>
+                <RarityBadge rarity={rarity} />
+              </div>
             )}
           </>
         )}

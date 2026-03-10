@@ -7,34 +7,330 @@
 body {
   margin: 0;
   padding: 0;
-  background: #0d0d0d;
-  color: #e0e0e0;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: radial-gradient(ellipse at 50% 0%, #12082a 0%, #0a0a0f 70%);
+  min-height: 100vh;
+  color: #e8d5b7;
+  font-family: 'Crimson Text', Georgia, serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #12082a; }
+::-webkit-scrollbar-thumb { background: #8b5a9f44; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #8b5a9f; }
+
+/* ── Typography helpers ────────────────────────────────────────────────────── */
+.font-cinzel { font-family: 'Cinzel', serif !important; }
+.font-cinzel-decorative { font-family: 'Cinzel Decorative', serif !important; }
+.font-crimson { font-family: 'Crimson Text', Georgia, serif !important; }
+
+/* ── Animated starfield background ────────────────────────────────────────── */
+.starfield {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
 }
 
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
+.starfield::before,
+.starfield::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 15%, #fff9 0%, transparent 100%),
+    radial-gradient(1px 1px at 22% 60%, #fff7 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 35% 30%, #fff8 0%, transparent 100%),
+    radial-gradient(1px 1px at 48% 80%, #fffb 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 10%, #fff9 0%, transparent 100%),
+    radial-gradient(2px 2px at 63% 45%, #c9a84c66 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 70%, #fff8 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 78% 25%, #8b5a9f88 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 55%, #fff9 0%, transparent 100%),
+    radial-gradient(1px 1px at 92% 85%, #fffb 0%, transparent 100%),
+    radial-gradient(1px 1px at 5% 42%, #fff7 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 88%, #fff9 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 28% 5%, #c9a84c55 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 50%, #fff6 0%, transparent 100%),
+    radial-gradient(1px 1px at 58% 95%, #fff8 0%, transparent 100%),
+    radial-gradient(1px 1px at 73% 12%, #fff9 0%, transparent 100%),
+    radial-gradient(2px 2px at 88% 38%, #4d9f5d66 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 62%, #fff7 0%, transparent 100%),
+    radial-gradient(1px 1px at 3% 72%, #fff8 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 18% 35%, #fff9 0%, transparent 100%);
 }
 
-::-webkit-scrollbar-thumb {
-  background: #2f2f2f;
-  border-radius: 3px;
+.starfield::before {
+  animation: drift1 40s linear infinite;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #4d9f5d;
+.starfield::after {
+  background-image:
+    radial-gradient(1px 1px at 7% 20%, #fff9 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 20% 75%, #8b5a9f66 0%, transparent 100%),
+    radial-gradient(1px 1px at 33% 40%, #fff8 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 90%, #fffb 0%, transparent 100%),
+    radial-gradient(2px 2px at 52% 18%, #c9a84c55 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 58%, #fff9 0%, transparent 100%),
+    radial-gradient(1px 1px at 67% 80%, #fff7 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 75% 32%, #fff8 0%, transparent 100%),
+    radial-gradient(1px 1px at 82% 65%, #4d9f5d55 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 48%, #fff9 0%, transparent 100%),
+    radial-gradient(1px 1px at 12% 52%, #fffb 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 25% 8%, #fff8 0%, transparent 100%),
+    radial-gradient(1px 1px at 38% 65%, #fff9 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 35%, #8b5a9f44 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 5%, #fff7 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 80% 88%, #c9a84c44 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 22%, #fff8 0%, transparent 100%);
+  animation: drift2 55s linear infinite;
 }
 
-/* Card hover glow handled via inline styles for dynamic color */
+@keyframes drift1 {
+  0% { transform: translateY(0px) translateX(0px); }
+  25% { transform: translateY(-8px) translateX(4px); }
+  50% { transform: translateY(-14px) translateX(-3px); }
+  75% { transform: translateY(-6px) translateX(6px); }
+  100% { transform: translateY(0px) translateX(0px); }
+}
 
+@keyframes drift2 {
+  0% { transform: translateY(0px) translateX(0px); }
+  33% { transform: translateY(10px) translateX(-5px); }
+  66% { transform: translateY(-5px) translateX(8px); }
+  100% { transform: translateY(0px) translateX(0px); }
+}
+
+/* ── Magic mist overlay ────────────────────────────────────────────────────── */
+.magic-mist {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(to top, #12082a88 0%, #8b5a9f11 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Title shimmer animation ──────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.title-shimmer {
+  background: linear-gradient(
+    90deg,
+    #c9a84c 0%,
+    #fff8e7 25%,
+    #8b5a9f 40%,
+    #4d9f5d 55%,
+    #fff8e7 70%,
+    #c9a84c 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 4s linear infinite;
+  font-family: 'Cinzel Decorative', serif;
+}
+
+/* ── Pulsing glow animation ──────────────────────────────────────────────── */
 @keyframes pulse-glow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%, 100% { box-shadow: 0 0 10px currentColor; opacity: 1; }
+  50% { box-shadow: 0 0 25px currentColor; opacity: 0.85; }
+}
+
+@keyframes pulse-orb {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.12); filter: brightness(1.3); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; transform: rotate(0deg) scale(1); }
+  25% { opacity: 0.7; transform: rotate(90deg) scale(1.1); }
+  50% { opacity: 1; transform: rotate(180deg) scale(0.9); }
+  75% { opacity: 0.8; transform: rotate(270deg) scale(1.05); }
+}
+
+@keyframes float-card {
+  0%, 100% { transform: translateY(0px) rotate(var(--card-rot, 0deg)); }
+  50% { transform: translateY(-4px) rotate(var(--card-rot, 0deg)); }
+}
+
+@keyframes shimmer-border {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ── Rare card glow sparkle ──────────────────────────────────────────────── */
+.rare-card {
+  animation: float-card 3s ease-in-out infinite;
+}
+
+.rare-card::after {
+  content: '✦';
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: #c9a84c;
+  font-size: 10px;
+  animation: sparkle 2s linear infinite;
+}
+
+/* ── Mana orb ────────────────────────────────────────────────────────────── */
+.mana-orb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-family: 'Cinzel', serif;
+  position: relative;
+  animation: pulse-orb 2.5s ease-in-out infinite;
+}
+
+/* ── Parchment texture ────────────────────────────────────────────────────── */
+.parchment {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(201, 168, 76, 0.015) 2px,
+      rgba(201, 168, 76, 0.015) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(201, 168, 76, 0.01) 3px,
+      rgba(201, 168, 76, 0.01) 6px
+    ),
+    linear-gradient(135deg, #1a1220 0%, #150e1e 50%, #1a1220 100%);
+}
+
+/* ── Game board wood texture ──────────────────────────────────────────────── */
+.board-texture {
+  background:
+    repeating-linear-gradient(
+      85deg,
+      transparent,
+      transparent 4px,
+      rgba(139, 107, 71, 0.04) 4px,
+      rgba(139, 107, 71, 0.04) 8px
+    ),
+    repeating-linear-gradient(
+      170deg,
+      transparent,
+      transparent 6px,
+      rgba(139, 107, 71, 0.02) 6px,
+      rgba(139, 107, 71, 0.02) 12px
+    ),
+    linear-gradient(180deg, #0f0a18 0%, #120c1e 100%);
+}
+
+/* ── Card face texture ────────────────────────────────────────────────────── */
+.card-texture {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      rgba(201, 168, 76, 0.012) 3px,
+      rgba(201, 168, 76, 0.012) 6px
+    ),
+    linear-gradient(160deg, #1e1428 0%, #180f22 50%, #1e1428 100%);
+}
+
+/* ── Turn indicator ──────────────────────────────────────────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
+  50% { opacity: 0.75; box-shadow: 0 0 20px currentColor; }
+}
+
+.turn-indicator {
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+/* ── Begin Brewing button ────────────────────────────────────────────────── */
+@keyframes brew-pulse {
+  0%, 100% { box-shadow: 0 0 20px #4d9f5d66, 0 0 40px #8b5a9f33; }
+  50% { box-shadow: 0 0 35px #4d9f5d88, 0 0 60px #8b5a9f55; }
+}
+
+.brew-button {
+  animation: brew-pulse 2s ease-in-out infinite;
+}
+
+/* ── Silver shimmer for uncommon ─────────────────────────────────────────── */
+.uncommon-shimmer {
+  background: linear-gradient(90deg, #8888aa 0%, #ccccdd 50%, #8888aa 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── Gold shimmer for rare ───────────────────────────────────────────────── */
+.rare-shimmer {
+  background: linear-gradient(90deg, #c9a84c 0%, #fff0a0 40%, #c9a84c 60%, #ffd700 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ── Waiting dots animation ──────────────────────────────────────────────── */
+@keyframes wait-dot {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40% { transform: scale(1.2); opacity: 1; }
+}
+
+.wait-dot:nth-child(1) { animation: wait-dot 1.2s ease-in-out infinite 0s; }
+.wait-dot:nth-child(2) { animation: wait-dot 1.2s ease-in-out infinite 0.2s; }
+.wait-dot:nth-child(3) { animation: wait-dot 1.2s ease-in-out infinite 0.4s; }
+
+/* ── Action log ──────────────────────────────────────────────────────────── */
+.action-log-entry {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Recipe parchment card ───────────────────────────────────────────────── */
+.recipe-parchment {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 18px,
+      rgba(201, 168, 76, 0.07) 18px,
+      rgba(201, 168, 76, 0.07) 19px
+    ),
+    linear-gradient(160deg, #1e1830 0%, #180f22 100%);
+  border: 1px solid #c9a84c44;
+}
+
+/* ── Card back shimmer ────────────────────────────────────────────────────── */
+.card-back-gradient {
+  background: linear-gradient(
+    135deg,
+    #12082a 0%,
+    #1e1428 25%,
+    #2a1040 50%,
+    #1e1428 75%,
+    #12082a 100%
+  );
 }

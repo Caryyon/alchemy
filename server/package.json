@@ -1,0 +1,14 @@
+{
+  "name": "alchemy-ws-server",
+  "version": "1.0.0",
+  "description": "WebSocket relay server for Alchemy multiplayer",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
