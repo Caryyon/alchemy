@@ -21,6 +21,7 @@ export interface BaseCard {
   name: string
   type: CardType
   description: string
+  image?: string       // path to card art, e.g. "/cards/moonstone-dust.png"
 }
 
 // ── Ingredient Card ──────────────────────────────────────────────────────────
