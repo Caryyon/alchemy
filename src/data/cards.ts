@@ -23,6 +23,42 @@ function copies<T>(count: number, factory: (_i: number) => T): T[] {
 
 // ── Ingredient Cards ─────────────────────────────────────────────────────────
 
+// Image paths for cards that have art. undefined = use gradient placeholder.
+const CARD_IMAGES: Record<string, string | undefined> = {
+  // Ingredients
+  'moonstone-dust':      '/cards/moonstone-dust.png',
+  'dragon-scale':        '/cards/dragon-scale.png',
+  'fairy-wings':         undefined,                          // no art — gradient placeholder
+  'crystal-shard':       '/cards/crystal-shard.png',
+  'raven-feather':       '/cards/raven-feather.png',
+  'phoenix-ash':         '/cards/phoenix-ash.png',
+  'starlight-essence':   '/cards/starlight-essence.png',
+  'ancient-root':        '/cards/ancient-root.png',
+  'void-crystal':        '/cards/void-crystal.png',
+  'pure-quartz':         '/cards/pure-quartz.png',
+  'unicorn-hair':        '/cards/unicorn-hair.png',
+  'meteor-fragment':     '/cards/meteor-fragment.png',
+  'time-flower':         '/cards/time-flower.png',
+  // Recipes
+  'healing-elixir':      '/cards/healing-elixir.png',
+  'fire-bomb':           '/cards/fire-bomb.png',
+  'invisibility-dra':    '/cards/invisibility-draught.png',
+  'mana-potion':         '/cards/mana-potion.png',
+  'truth-serum':         '/cards/truth-serum.png',
+  'dragons-breath':      '/cards/dragons-breath.png',
+  'shapeshifters-brew':  '/cards/shapeshifters-brew.png',
+  'mind-control':        '/cards/mind-control-elixir.png',
+  'necromancers-dr':     '/cards/necromancers-draught.png',
+  'moonbeam-essence':    '/cards/moonbeam-essence.png',
+  // Scrolls
+  'scroll-haste':        '/cards/scroll-of-haste.png',
+  'scroll-protection':   '/cards/scroll-of-protection.png',
+  'scroll-abundance':    '/cards/scroll-of-abundance.png',
+  'scroll-chaos':        '/cards/scroll-of-chaos.png',
+  'scroll-wisdom':       '/cards/scroll-of-wisdom.png',
+  // Spells — no art, gradient by mana color
+}
+
 function makeIngredient(
   defId: string,
   name: string,
@@ -40,6 +76,7 @@ function makeIngredient(
     description: specialEffect
       ? 'Draw an extra card when played.'
       : `Provides ${manaValue} ${manaType} mana.`,
+    image: CARD_IMAGES[defId],
     manaType,
     manaValue,
     rarity,
@@ -51,7 +88,7 @@ export const INGREDIENT_CARDS: IngredientCard[] = [
   // Common — 4 copies each (20 total)
   ...makeIngredient('moonstone-dust',  'Moonstone Dust',  'Lunar',  1, 'common',   4),
   ...makeIngredient('dragon-scale',    'Dragon Scale',    'Fire',   1, 'common',   4),
-  ...makeIngredient('fairy-wings',     'Fairy Wings',     'Nature', 1, 'common',   4),
+  ...makeIngredient('fairy-wings',     'Fairy Wings',     'Nature', 1, 'common',   4),  // gradient placeholder
   ...makeIngredient('crystal-shard',   'Crystal Shard',   'Arcane', 1, 'common',   4),
   ...makeIngredient('raven-feather',   'Raven Feather',   'Shadow', 1, 'common',   4),
 
@@ -85,6 +122,7 @@ function makeRecipe(
     description: cost
       .map((c) => `${c.amount} ${c.manaType}`)
       .join(' + '),
+    image: CARD_IMAGES[defId],
     difficulty,
     cost,
     progress: cost.map((c) => ({
@@ -129,6 +167,7 @@ function makeSpell(
     definitionId: defId,
     name,
     type: 'spell' as const,
+    image: CARD_IMAGES[defId],   // spells have no art — will be undefined → gradient
     classId,
     manaType,
     manaCost,
@@ -223,6 +262,7 @@ function makeScroll(
     definitionId: defId,
     name,
     type: 'scroll' as const,
+    image: CARD_IMAGES[defId],
     description,
     effect,
   }))
@@ -281,53 +321,4 @@ export const MANA_GRADIENTS: Record<ManaType, string> = {
   Arcane: 'from-teal-900 via-teal-700 to-cyan-800',
   Shadow: 'from-blue-950 via-blue-900 to-slate-800',
   Any:    'from-yellow-900 via-amber-800 to-orange-900',
-}
-
-// ── Card Image Map ────────────────────────────────────────────────────────────
-// Maps definitionId → image path in /public/cards/
-// Only cards with Midjourney art are listed — everything else uses gradient fallback
-
-export const CARD_IMAGES: Record<string, string> = {
-  // Ingredients — Common
-  'moonstone-dust':     '/cards/moonstone-dust.png',
-  'dragon-scale':       '/cards/dragon-scale.png',
-  'crystal-shard':      '/cards/crystal-shard.png',
-  'raven-feather':      '/cards/raven-feather.png',
-  // 'fairy-wings' — no art yet, uses gradient
-
-  // Ingredients — Uncommon
-  'phoenix-ash':        '/cards/phoenix-ash.png',
-  'starlight-essence':  '/cards/starlight-essence.png',
-  'ancient-root':       '/cards/ancient-root.png',
-  'void-crystal':       '/cards/void-crystal.png',
-  'pure-quartz':        '/cards/pure-quartz.png',
-
-  // Ingredients — Rare
-  'unicorn-hair':       '/cards/unicorn-hair.png',
-  'meteor-fragment':    '/cards/meteor-fragment.png',
-  'time-flower':        '/cards/time-flower.png',
-
-  // Potions — Basic
-  'healing-elixir':     '/cards/healing-elixir.png',
-  'fire-bomb':          '/cards/fire-bomb.png',
-  'invisibility-draught': '/cards/invisibility-draught.png',
-  'mana-potion':        '/cards/mana-potion.png',
-  'truth-serum':        '/cards/truth-serum.png',
-
-  // Potions — Advanced
-  'dragons-breath':     '/cards/dragons-breath.png',
-  'shapeshifters-brew': '/cards/shapeshifters-brew.png',
-  'mind-control-elixir': '/cards/mind-control-elixir.png',
-  'necromancers-draught': '/cards/necromancers-draught.png',
-  'moonbeam-essence':   '/cards/moonbeam-essence.png',
-
-  // Scrolls
-  'scroll-of-haste':      '/cards/scroll-of-haste.png',
-  'scroll-of-protection': '/cards/scroll-of-protection.png',
-  'scroll-of-abundance':  '/cards/scroll-of-abundance.png',
-  'scroll-of-chaos':      '/cards/scroll-of-chaos.png',
-  'scroll-of-wisdom':     '/cards/scroll-of-wisdom.png',
-
-  // Special
-  'card-back': '/cards/card-back.png',
 }

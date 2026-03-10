@@ -7,37 +7,6 @@ import React from 'react'
 import type { Card as CardType, IngredientCard, SpellCard, ManaType } from '../types/game'
 import { MANA_COLORS, MANA_GRADIENTS } from '../data/cards'
 
-// Map definitionId → art file in /cards/
-const CARD_ART: Record<string, string> = {
-  'moonstone-dust':      '/cards/moonstone-dust.png',
-  'dragon-scale':        '/cards/dragon-scale.png',
-  'raven-feather':       '/cards/raven-feather.png',
-  'crystal-shard':       '/cards/crystal-shard.png',
-  'phoenix-ash':         '/cards/phoenix-ash.png',
-  'starlight-essence':   '/cards/starlight-essence.png',
-  'ancient-root':        '/cards/ancient-root.png',
-  'void-crystal':        '/cards/void-crystal.png',
-  'pure-quartz':         '/cards/pure-quartz.png',
-  'unicorn-hair':        '/cards/unicorn-hair.png',
-  'meteor-fragment':     '/cards/meteor-fragment.png',
-  'time-flower':         '/cards/time-flower.png',
-  'healing-elixir':      '/cards/healing-elixir.png',
-  'fire-bomb':           '/cards/fire-bomb.png',
-  'invisibility-dra':    '/cards/invisibility-draught.png',
-  'mana-potion':         '/cards/mana-potion.png',
-  'truth-serum':         '/cards/truth-serum.png',
-  'dragons-breath':      '/cards/dragons-breath.png',
-  'shapeshifters-brew':  '/cards/shapeshifters-brew.png',
-  'mind-control':        '/cards/mind-control-elixir.png',
-  'necromancers-dr':     '/cards/necromancers-draught.png',
-  'moonbeam-essence':    '/cards/moonbeam-essence.png',
-  'scroll-haste':        '/cards/scroll-of-haste.png',
-  'scroll-protection':   '/cards/scroll-of-protection.png',
-  'scroll-abundance':    '/cards/scroll-of-abundance.png',
-  'scroll-chaos':        '/cards/scroll-of-chaos.png',
-  'scroll-wisdom':       '/cards/scroll-of-wisdom.png',
-}
-
 interface CardProps {
   card: CardType
   onClick?: () => void
@@ -112,6 +81,47 @@ function ManaCostBadge({ card }: { card: CardType }) {
   return null
 }
 
+// ── Art Area ──────────────────────────────────────────────────────────────────
+// Uses card.image (set in cards.ts) when art exists.
+// Falls back to a mana-colored gradient for fairy-wings, spells, and any card without art.
+
+function CardArt({ card, height }: { card: CardType; height: number }) {
+  if (card.image) {
+    return (
+      <div style={{ height, width: '100%', overflow: 'hidden', flexShrink: 0 }}>
+        <img
+          src={card.image}
+          alt={card.name}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center top',
+            display: 'block',
+          }}
+        />
+      </div>
+    )
+  }
+
+  // Gradient placeholder (fairy-wings, spells, any card without art)
+  const gradient = getGradient(card)
+  const emoji =
+    card.type === 'ingredient' ? '🌿'   // fairy-wings
+    : card.type === 'recipe'   ? '🧪'
+    : card.type === 'scroll'   ? '📜'
+    : '✨'                               // spell
+
+  return (
+    <div
+      className={`bg-gradient-to-br ${gradient} flex items-center justify-center`}
+      style={{ height, width: '100%', flexShrink: 0 }}
+    >
+      <span style={{ fontSize: height < 50 ? 20 : 36 }}>{emoji}</span>
+    </div>
+  )
+}
+
 export const CardComponent: React.FC<CardProps> = ({
   card,
   onClick,
@@ -121,8 +131,9 @@ export const CardComponent: React.FC<CardProps> = ({
   faceDown = false,
 }) => {
   const accent = getCardAccent(card)
-  const gradient = getGradient(card)
+  const artHeight = compact ? 44 : 90
 
+  // ── Face-down (deck pile / opponent hand) ────────────────────────────────
   if (faceDown) {
     return (
       <div
@@ -136,20 +147,27 @@ export const CardComponent: React.FC<CardProps> = ({
         <img
           src="/cards/card-back.png"
           alt="Card back"
-          className="w-full h-full object-cover"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          onError={(e) => {
+            // Fallback if card-back.png is missing for some reason
+            const el = e.currentTarget as HTMLImageElement
+            el.style.display = 'none'
+            ;(el.parentElement as HTMLDivElement).style.background =
+              'linear-gradient(135deg, #1a1a1a, #0d0d0d)'
+          }}
         />
       </div>
     )
   }
 
+  // ── Face-up card ─────────────────────────────────────────────────────────
   return (
     <div
       onClick={!disabled ? onClick : undefined}
       className={`
-        relative rounded-xl overflow-hidden flex-shrink-0 transition-all duration-200
+        relative rounded-xl overflow-hidden flex-shrink-0 flex flex-col transition-all duration-200
         ${onClick && !disabled ? 'cursor-pointer hover:scale-105' : ''}
-        ${selected ? 'scale-105 ring-2 ring-white' : ''}
+        ${selected ? 'scale-105' : ''}
         ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
       `}
       style={{
@@ -159,12 +177,10 @@ export const CardComponent: React.FC<CardProps> = ({
         border: `2px solid ${selected ? '#fff' : accent}`,
         boxShadow: selected
           ? `0 0 16px ${accent}88`
-          : onClick && !disabled
-          ? `0 0 0px ${accent}00`
           : 'none',
       }}
       onMouseEnter={(e) => {
-        if (onClick && !disabled && !selected) {
+        if (onClick && !disabled) {
           ;(e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 12px ${accent}66`
         }
       }}
@@ -174,47 +190,16 @@ export const CardComponent: React.FC<CardProps> = ({
         }
       }}
     >
-      {/* Art area */}
-      {CARD_ART[card.definitionId] ? (
-        <div
-          style={{ height: compact ? 44 : 90, width: '100%', overflow: 'hidden', position: 'relative' }}
-        >
-          <img
-            src={CARD_ART[card.definitionId]}
-            alt={card.name}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center top',
-              display: 'block',
-            }}
-          />
-        </div>
-      ) : (
-        <div
-          className={`bg-gradient-to-br ${gradient} flex items-center justify-center`}
-          style={{ height: compact ? 44 : 90, width: '100%' }}
-        >
-          <span className={compact ? 'text-2xl' : 'text-4xl'}>
-            {card.type === 'ingredient' ? '⚗️'
-              : card.type === 'recipe' ? '🧪'
-              : card.type === 'scroll' ? '📜'
-              : '✨'}
-          </span>
-        </div>
-      )}
+      {/* Art */}
+      <CardArt card={card} height={artHeight} />
 
-      {/* Card body */}
-      <div className="p-1.5 flex flex-col gap-0.5">
+      {/* Text body */}
+      <div className="p-1.5 flex flex-col gap-0.5 flex-1 overflow-hidden">
         {!compact && <TypeBadge card={card} />}
 
         <p
           className="font-bold leading-tight"
-          style={{
-            fontSize: compact ? 9 : 12,
-            color: accent,
-          }}
+          style={{ fontSize: compact ? 9 : 12, color: accent }}
         >
           {card.name}
         </p>
@@ -223,7 +208,7 @@ export const CardComponent: React.FC<CardProps> = ({
           <>
             <ManaCostBadge card={card} />
             <p
-              className="text-gray-400 leading-tight"
+              className="text-gray-400 leading-tight overflow-hidden"
               style={{ fontSize: 10, marginTop: 2 }}
             >
               {card.description}
