@@ -8,6 +8,8 @@ import { motion } from 'framer-motion'
 import type { Card as CardType, IngredientCard, SpellCard, ManaType } from '../types/game'
 import { MANA_COLORS } from '../data/cards'
 
+type CardSize = 'xs' | 'sm' | 'md'
+
 interface CardProps {
   card: CardType
   onClick?: () => void
@@ -16,6 +18,7 @@ interface CardProps {
   compact?: boolean
   faceDown?: boolean
   rotation?: number
+  size?: CardSize
 }
 
 // Mana type gradients for card art area
@@ -40,8 +43,8 @@ function getCardAccent(card: CardType): string {
 }
 
 // ── Mana gem dots ─────────────────────────────────────────────────────────────
-function ManaGems({ card, compact }: { card: CardType; compact?: boolean }) {
-  const gemSize = compact ? 6 : 8
+function ManaGems({ card, compact, size }: { card: CardType; compact?: boolean; size?: CardSize }) {
+  const gemSize = size === 'xs' ? 4 : compact ? 6 : 8
 
   if (card.type === 'ingredient') {
     const ing = card as IngredientCard
@@ -73,13 +76,15 @@ function ManaGems({ card, compact }: { card: CardType; compact?: boolean }) {
   if (card.type === 'spell') {
     const sp = card as SpellCard
     const color = MANA_COLORS[sp.manaType]
+    const orbSize = size === 'xs' ? 10 : compact ? 14 : 18
+    const orbFontSize = size === 'xs' ? 6 : compact ? 8 : 10
     return (
       <div className="flex items-center gap-1">
         <motion.div
           whileHover={{ scale: 1.1 }}
           style={{
-            width: compact ? 14 : 18,
-            height: compact ? 14 : 18,
+            width: orbSize,
+            height: orbSize,
             borderRadius: '50%',
             background: `radial-gradient(circle at 35% 35%, ${color}ff, ${color}55)`,
             boxShadow: `0 0 8px ${color}88, inset 0 1px 2px rgba(255,255,255,0.3)`,
@@ -87,7 +92,7 @@ function ManaGems({ card, compact }: { card: CardType; compact?: boolean }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: compact ? 8 : 10,
+            fontSize: orbFontSize,
             fontFamily: 'Cinzel, serif',
             fontWeight: 700,
             color: '#fff',
@@ -233,29 +238,39 @@ export const CardComponent: React.FC<CardProps> = ({
   compact = false,
   faceDown = false,
   rotation = 0,
+  size,
 }) => {
   const [hovered, setHovered] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const accent = getCardAccent(card)
-  const artHeight = compact ? 44 : 96
+
+  // When size prop is provided, the card fills its container (100%×100%)
+  // and adjusts internal sizing accordingly
+  const fillContainer = size === 'xs' || size === 'sm'
+  const effectiveCompact = compact || fillContainer
+
+  const artHeight = size === 'xs' ? 36 : size === 'sm' ? 44 : compact ? 44 : 96
 
   const isIngredient = card.type === 'ingredient'
   const rarity = isIngredient ? (card as IngredientCard).rarity : 'common'
   const isRare = rarity === 'rare'
   const isUncommon = rarity === 'uncommon'
 
-  const cardWidth = compact ? 76 : 148
-  const cardHeight = compact ? 108 : 220
+  // When filling container, use 100% dimensions; otherwise use fixed sizes
+  const cardWidth = fillContainer ? '100%' : compact ? 76 : 148
+  const cardHeight = fillContainer ? '100%' : compact ? 108 : 220
 
   // ── Face-down ───────────────────────────────────────────────────────────
   if (faceDown) {
+    const faceDownWidth = fillContainer ? '100%' : effectiveCompact ? 72 : 110
+    const faceDownHeight = fillContainer ? '100%' : effectiveCompact ? 100 : 154
     return (
       <motion.div
         whileHover={{ scale: 1.02, rotateY: 5 }}
         className="relative rounded-xl overflow-hidden flex-shrink-0"
         style={{
-          width: compact ? 72 : 110,
-          height: compact ? 100 : 154,
+          width: faceDownWidth,
+          height: faceDownHeight,
           background: 'linear-gradient(135deg, #12082a 0%, #1e1428 25%, #2a1040 50%, #1e1428 75%, #12082a 100%)',
           border: '2px solid #8b5a9f55',
           boxShadow: '0 4px 20px rgba(0,0,0,0.6), inset 0 0 30px rgba(139,90,159,0.15)',
@@ -279,7 +294,7 @@ export const CardComponent: React.FC<CardProps> = ({
           <motion.span
             animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
             transition={{ duration: 4, repeat: Infinity }}
-            style={{ fontSize: compact ? 20 : 32, filter: 'drop-shadow(0 0 8px #8b5a9f66)' }}
+            style={{ fontSize: size === 'xs' ? 14 : effectiveCompact ? 20 : 32, filter: 'drop-shadow(0 0 8px #8b5a9f66)' }}
           >
             ⚗️
           </motion.span>
@@ -324,7 +339,7 @@ export const CardComponent: React.FC<CardProps> = ({
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className={`
         relative flex-shrink-0 flex flex-col
-        ${isRare && !compact ? 'rare-card' : ''}
+        ${isRare && !effectiveCompact ? 'rare-card' : ''}
         ${onClick && !disabled ? 'cursor-pointer' : ''}
         ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
       `}
@@ -378,7 +393,7 @@ export const CardComponent: React.FC<CardProps> = ({
           zIndex: 9,
         }} />
       )}
-      {isUncommon && !compact && (
+      {isUncommon && !effectiveCompact && (
         <div style={{
           position: 'absolute',
           inset: 0,
@@ -393,7 +408,7 @@ export const CardComponent: React.FC<CardProps> = ({
       )}
 
       {/* Art area */}
-      <CardArt card={card} height={artHeight} compact={compact} />
+      <CardArt card={card} height={artHeight} compact={effectiveCompact} />
 
       {/* Metallic divider with gem accent */}
       <div style={{
@@ -418,33 +433,36 @@ export const CardComponent: React.FC<CardProps> = ({
 
       {/* Card info body */}
       <div style={{
-        padding: compact ? '5px 6px' : '8px 10px',
+        padding: size === 'xs' ? '3px 4px' : effectiveCompact ? '5px 6px' : '8px 10px',
         display: 'flex',
         flexDirection: 'column',
-        gap: compact ? 3 : 4,
+        gap: size === 'xs' ? 2 : effectiveCompact ? 3 : 4,
         flex: 1,
         overflow: 'hidden',
         background: 'linear-gradient(175deg, rgba(26,18,32,0.95) 0%, rgba(14,8,22,0.98) 100%)',
       }}>
-        {!compact && <TypeTag card={card} />}
+        {!effectiveCompact && <TypeTag card={card} />}
 
         {/* Card name */}
         <p style={{
           fontFamily: 'Cinzel, serif',
           fontWeight: 700,
-          fontSize: compact ? 9 : 12,
+          fontSize: size === 'xs' ? 7 : effectiveCompact ? 9 : 12,
           color: accent,
           lineHeight: 1.2,
           textShadow: `0 0 10px ${accent}44`,
           margin: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: size === 'xs' ? 'nowrap' : undefined,
         }}>
           {card.name}
         </p>
 
         {/* Mana gems */}
-        <ManaGems card={card} compact={compact} />
+        <ManaGems card={card} compact={effectiveCompact} size={size} />
 
-        {!compact && (
+        {!effectiveCompact && (
           <>
             {/* Description */}
             <p style={{
