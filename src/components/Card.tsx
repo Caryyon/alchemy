@@ -23,12 +23,12 @@ interface CardProps {
 
 // Mana type gradients for card art area
 const MANA_ART_GRADIENTS: Record<ManaType, string> = {
-  Fire: 'linear-gradient(135deg, #3a0f00 0%, #8b2500 50%, #d4774a33 100%)',
-  Nature: 'linear-gradient(135deg, #0a1a0a 0%, #1a4a1a 50%, #4d9f5d33 100%)',
-  Lunar: 'linear-gradient(135deg, #1a0a2a 0%, #3a1a5a 50%, #8b5a9f33 100%)',
-  Arcane: 'linear-gradient(135deg, #0a1a2a 0%, #1a2a4a 50%, #5c8a8a33 100%)',
-  Shadow: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 50%, #4a6b8a33 100%)',
-  Any: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a3a 50%, #c9a84c22 100%)',
+  Fire: 'linear-gradient(160deg, #1a0500 0%, #5a1800 40%, #8b3010 70%, #3a0f00 100%)',
+  Nature: 'linear-gradient(160deg, #020d02 0%, #0d2e0d 40%, #1a5a1a 70%, #0a1a0a 100%)',
+  Lunar: 'linear-gradient(160deg, #0a0118 0%, #1e0838 40%, #3a1a5a 70%, #1a0a2a 100%)',
+  Arcane: 'linear-gradient(160deg, #010d18 0%, #0a1e30 40%, #1a3a50 70%, #0a1a2a 100%)',
+  Shadow: 'linear-gradient(160deg, #010108 0%, #0a0a18 40%, #1a1a30 70%, #0d0d1a 100%)',
+  Any: 'linear-gradient(160deg, #0d0d10 0%, #1a1520 40%, #2a2235 70%, #151018 100%)',
 }
 
 function getManaType(card: CardType): ManaType {
@@ -315,14 +315,14 @@ export const CardComponent: React.FC<CardProps> = ({
   const glowIntensity = selected ? 'high' : hovered ? 'medium' : isRare ? 'low' : 'none'
 
   const glowStyles: Record<string, string> = {
-    high: `0 0 0 2px ${accent}88, 0 0 30px ${accent}88, 0 0 60px ${accent}44`,
-    medium: `0 0 20px ${accent}66, 0 0 40px ${accent}33`,
-    low: `0 0 15px #c9a84c33`,
+    high: `0 0 0 2px #c9a84c, 0 0 16px #c9a84c88, 0 8px 24px rgba(0,0,0,0.8)`,
+    medium: `0 0 12px ${accent}66, 0 4px 16px rgba(0,0,0,0.6)`,
+    low: `0 0 10px #c9a84c22, 0 4px 12px rgba(0,0,0,0.5)`,
     none: '0 4px 16px rgba(0,0,0,0.5)',
   }
 
-  const translateY = selected ? -12 : hovered ? -8 : 0
-  const scale = selected ? 1.06 : hovered ? 1.04 : 1
+  const translateY = selected ? -10 : hovered ? -5 : 0
+  const scale = selected ? 1.04 : hovered ? 1.02 : 1
 
   return (
     <motion.div
