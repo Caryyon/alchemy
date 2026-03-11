@@ -37,7 +37,8 @@ function totalMana(pool: Record<ManaType, number>): number {
 
 function manaOfType(pool: Record<ManaType, number>, type: ManaType): number {
   if (type === 'Any') return totalMana(pool)
-  return pool[type] ?? 0
+  // For specific types, include the Any pool as a wildcard
+  return (pool[type] ?? 0) + (pool['Any'] ?? 0)
 }
 
 function removeCardById(cards: Card[], id: string): [Card[], Card | undefined] {
@@ -328,7 +329,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         remaining -= spend
       }
     } else {
-      newPool[manaType] -= cost
+      // Drain specific type first, then Any for remainder
+      const fromSpecific = Math.min(newPool[manaType] ?? 0, cost)
+      newPool[manaType] = (newPool[manaType] ?? 0) - fromSpecific
+      const remainder = cost - fromSpecific
+      if (remainder > 0) {
+        newPool['Any'] -= remainder
+      }
     }
 
     // Remove spell from wherever it was
@@ -386,10 +393,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const needed = progressEntry.required - progressEntry.contributed
     const toSpend = Math.min(amount, needed)
 
-    // Check available mana
+    // Check available mana (include Any pool for specific types)
     const available = manaType === 'Any'
       ? totalMana(player.manaPool)
-      : (player.manaPool[manaType] ?? 0)
+      : (player.manaPool[manaType] ?? 0) + (player.manaPool['Any'] ?? 0)
 
     if (available < toSpend) {
       set({ message: `Not enough ${manaType} mana.` })
@@ -408,7 +415,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         remaining -= spend
       }
     } else {
-      newPool[manaType] -= toSpend
+      // Drain specific type first, then Any for remainder
+      const fromSpecific = Math.min(newPool[manaType] ?? 0, toSpend)
+      newPool[manaType] = (newPool[manaType] ?? 0) - fromSpecific
+      const remainder = toSpend - fromSpecific
+      if (remainder > 0) {
+        newPool['Any'] -= remainder
+      }
     }
 
     // Update recipe progress
@@ -816,6 +829,49 @@ export const useGameStore = create<GameState>((set, get) => ({
       winner: null,
       message: 'Welcome to Alchemy!',
       pendingAction: null,
+    })
+  },
+
+  // ── hydrateFromMultiplayer ─────────────────────────────────────────────────
+  // Hydrates the local game store with state received from the server (for non-host players)
+
+  hydrateFromMultiplayer: (gameState: Partial<GameState>, playerOrder: string[], _myPlayerId: string | null) => {
+    // Extract the game state properties we need (excluding actions)
+    const {
+      phase,
+      players,
+      currentPlayerIndex,
+      turnPhase,
+      mainDeck,
+      marketRow,
+      discardPile,
+      winner,
+      message,
+      pendingAction,
+    } = gameState
+
+    // Determine the current player index based on playerOrder
+    let newCurrentPlayerIndex = currentPlayerIndex ?? 0
+    if (playerOrder.length > 0 && players && players.length > 0) {
+      // The first player in playerOrder is the starting player
+      const startingPlayerId = playerOrder[0]
+      const idx = players.findIndex(p => p.id === startingPlayerId)
+      if (idx !== -1) {
+        newCurrentPlayerIndex = idx
+      }
+    }
+
+    set({
+      phase: phase ?? 'playing',
+      players: players ?? [],
+      currentPlayerIndex: newCurrentPlayerIndex,
+      turnPhase: turnPhase ?? 'draw',
+      mainDeck: mainDeck ?? [],
+      marketRow: marketRow ?? [],
+      discardPile: discardPile ?? [],
+      winner: winner ?? null,
+      message: message ?? 'Game started!',
+      pendingAction: pendingAction ?? null,
     })
   },
 }))

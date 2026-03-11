@@ -162,6 +162,7 @@ export interface GameState {
   endTurn: () => void
   resolvePendingAction: (choice: unknown) => void
   resetGame: () => void
+  hydrateFromMultiplayer: (gameState: Partial<GameState>, playerOrder: string[], myPlayerId: string | null) => void
 }
 
 // ── Pending Actions (for multi-step interactions) ────────────────────────────

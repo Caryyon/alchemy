@@ -334,3 +334,237 @@ body {
     #12082a 100%
   );
 }
+
+/* ── Mobile-first responsive styles ──────────────────────────────────────── */
+
+/* Ensure touch actions work well on mobile */
+button, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling for card lists */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area insets for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Cauldron glow animation */
+@keyframes cauldron-glow {
+  0%, 100% { filter: drop-shadow(0 0 12px #4d9f5d44); }
+  50% { filter: drop-shadow(0 0 24px #4d9f5d88); }
+}
+
+.cauldron-glow {
+  animation: cauldron-glow 3s ease-in-out infinite;
+}
+
+/* Felt table texture for center area */
+.felt-table {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(77,159,93,0.08) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(15,10,24,0.9) 0%, rgba(20,14,30,0.95) 100%);
+}
+
+/* Card compact sizing for mobile */
+.card-compact {
+  width: 76px;
+  height: 108px;
+}
+
+.card-mobile-hand {
+  width: 88px;
+  height: 132px;
+}
+
+.card-market {
+  width: 80px;
+  height: 120px;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 640px) {
+  /* Reduce padding on mobile */
+  .mobile-compact {
+    padding: 8px !important;
+  }
+
+  /* Ensure cards don't overflow */
+  .card-container {
+    max-width: calc(100vw - 24px);
+  }
+
+  /* Smaller fonts on mobile */
+  .mobile-text-xs {
+    font-size: 10px !important;
+  }
+
+  .mobile-text-sm {
+    font-size: 12px !important;
+  }
+}
+
+/* Tablet and desktop adjustments */
+@media (min-width: 768px) {
+  .md\:card-full {
+    width: 148px;
+    height: 220px;
+  }
+}
+
+/* Prevent text selection on game elements */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Recipe pip indicators */
+.mana-pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.mana-pip-filled {
+  box-shadow: 0 0 4px currentColor;
+}
+
+.mana-pip-empty {
+  background: rgba(30,20,40,0.6);
+  border: 1px solid #4a3a5a;
+}
+
+/* Action bar slide-up animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Card lift effect on selection */
+.card-selected {
+  transform: translateY(-12px) scale(1.05);
+  box-shadow: 0 0 24px rgba(255,255,255,0.3);
+}
+
+/* Horizontal scroll snap for card rows */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* ── AAA Visual Overhaul Additions ────────────────────────────────────────── */
+
+/* Focus states */
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #c9a84c;
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #8b5a9f;
+  outline-offset: 1px;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(201, 168, 76, 0.3);
+  color: #c9a84c;
+}
+
+/* Title glow animation */
+@keyframes title-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 10px rgba(201, 168, 76, 0.4),
+      0 0 20px rgba(201, 168, 76, 0.2);
+    filter: brightness(1);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(201, 168, 76, 0.6),
+      0 0 40px rgba(201, 168, 76, 0.4),
+      0 0 60px rgba(201, 168, 76, 0.2);
+    filter: brightness(1.1);
+  }
+}
+
+.title-glow {
+  animation: title-glow 3s ease-in-out infinite;
+}
+
+/* Glass panel effect */
+.glass-panel {
+  background: rgba(14, 8, 22, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(74, 58, 90, 0.5);
+  border-radius: 16px;
+}
+
+/* Loading spinner */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  animation: spin-slow 2s linear infinite;
+  display: inline-block;
+}
+
+/* Tooltip base */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(14, 8, 22, 0.95);
+  border: 1px solid #4a3a5a;
+  font-family: 'Crimson Text', serif;
+  font-size: 12px;
+  color: #b8a898;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1000;
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+}

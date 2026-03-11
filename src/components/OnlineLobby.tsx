@@ -71,8 +71,31 @@ export const OnlineLobby: React.FC<OnlineLobbyProps> = ({ onBack }) => {
     // Use simple class assignment - cycle through classes
     const classIds = ['druid', 'mage', 'sorcerer', 'bard', 'witch']
     const classes = players.map((_, i) => classIds[i % classIds.length])
+
+    // Start local game first
     localStartGame(players.length, classes, names)
-    startGame({ started: true })
+
+    // Then broadcast full state to server
+    // Use a timeout to let the state update before reading it
+    setTimeout(() => {
+      const fullGameState = useGameStore.getState()
+      // Extract only the serializable state (not the actions)
+      const gameState = {
+        phase: fullGameState.phase,
+        players: fullGameState.players,
+        currentPlayerIndex: fullGameState.currentPlayerIndex,
+        turnPhase: fullGameState.turnPhase,
+        mainDeck: fullGameState.mainDeck,
+        marketRow: fullGameState.marketRow,
+        discardPile: fullGameState.discardPile,
+        winner: fullGameState.winner,
+        message: fullGameState.message,
+        pendingAction: fullGameState.pendingAction,
+      }
+      // Create player order array from lobby players
+      const playerOrder = players.map(p => `player-${players.indexOf(p) + 1}`)
+      startGame({ gameState, playerOrder, started: true })
+    }, 50)
   }
 
   const shareUrl = roomCode
